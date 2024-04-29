@@ -19,7 +19,6 @@ linters:
     - depguard
     - exhaustruct
     - forbidigo
-    - ireturn
     - nonamedreturns
     - varnamelen
     - wrapcheck
@@ -32,3 +31,7 @@ linters-settings:
     enable-all: true
     disable:
       - require-error
+  ireturn:
+    allow:
+      - error
+      - generic

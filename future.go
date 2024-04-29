@@ -22,7 +22,7 @@ import (
 	"fmt"
 )
 
-// ErrNotReady is returned when a future is not complete.
+// ErrNotReady is returned when the future is not complete.
 var ErrNotReady = errors.New("future not ready")
 
 // Future represents a read-only view of the result of an asynchronous operation.
@@ -52,18 +52,11 @@ func (f *Future[R]) Await(ctx context.Context) (R, error) {
 
 // Try returns the cached result when ready, [ErrNotReady] otherwise.
 func (f *Future[R]) Try() (R, error) {
-	if f != nil {
-		if done := f.done.Load(); done != nil {
-			select {
-			case <-*done:
-				return f.value, f.err
-
-			default:
-			}
-		}
+	if f == nil || !f.done.Closed() {
+		return *new(R), ErrNotReady
 	}
 
-	return *new(R), ErrNotReady
+	return f.value, f.err
 }
 
 // Done returns a channel that is closed when the future is complete.
@@ -73,18 +66,7 @@ func (f *Future[_]) Done() <-chan struct{} {
 		return nil
 	}
 
-	if done := f.done.Load(); done != nil {
-		return *done
-	}
-
-	done := make(chan struct{})
-	if f.done.CompareAndSwap(nil, &done) {
-		return done
-	}
-
-	done2 := f.done.Load()
-
-	return *done2
+	return f.done.Done()
 }
 
 func (f *Future[R]) String() string {
@@ -92,13 +74,9 @@ func (f *Future[R]) String() string {
 		return "Future <nil>"
 	}
 
-	if done := f.done.Load(); done != nil {
-		select {
-		case <-*done:
-			return fmt.Sprintf("Future resolved: %v, %v", f.value, f.err)
-		default:
-		}
+	if !f.done.Closed() {
+		return "Future pending"
 	}
 
-	return "Future pending"
+	return fmt.Sprintf("Future resolved: %v, %v", f.value, f.err)
 }

@@ -64,7 +64,7 @@ type Option interface {
 }
 
 // WithLimit is an [Option] to configure the limit of active goroutines.
-func WithLimit(limit int) Option {
+func WithLimit(limit int) Option { //nolint:ireturn
 	if limit < 1 {
 		panic("limit must be at least 1")
 	}
@@ -83,7 +83,7 @@ func (o limitOption) apply(opts *options) {
 // WithCancel is an [Option] to cancel a context on the first error.
 //
 // cancel is a function retrieved from [context.WithCancelCause].
-func WithCancel(cancel context.CancelCauseFunc) Option {
+func WithCancel(cancel context.CancelCauseFunc) Option { //nolint:ireturn
 	return cancelOption{cancel: cancel}
 }
 
@@ -135,20 +135,22 @@ func DoAsync[R any](ctx context.Context, g *Group, fn func() (R, error)) *async.
 		return p.Future()
 	}
 
-	go p.Do(func() (R, error) {
+	go func() {
 		defer g.release()
 
-		value, err := func() (value R, err error) {
-			defer g.recover(&err)
+		p.Do(func() (R, error) {
+			value, err := func() (value R, err error) {
+				defer g.recover(&err)
 
-			return fn()
-		}()
-		if err != nil {
-			g.setError(err)
-		}
+				return fn()
+			}()
+			if err != nil {
+				g.setError(err)
+			}
 
-		return value, err
-	})
+			return value, err
+		})
+	}()
 
 	return p.Future()
 }

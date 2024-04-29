@@ -9,7 +9,6 @@ exclude_patterns:
   - "**/.*"
   - "**/*_test.go"
   - "**/*.md"
-  - "**/nocopy.go"
   - "LICENSE"
   - "go.mod"
   - "go.sum"

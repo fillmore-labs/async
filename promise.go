@@ -18,7 +18,8 @@ package async
 
 import (
 	"fmt"
-	"sync/atomic"
+
+	"fillmore-labs.com/lazydone"
 )
 
 // Promise defines the common operations for resolving a [Future] to its final value.
@@ -26,10 +27,9 @@ import (
 // An empty value is valid and must not be copied after creation. One of the resolving
 // operations may be called once from any goroutine, all subsequent calls will panic.
 type Promise[R any] struct {
-	_     noCopy
-	done  atomic.Pointer[chan struct{}] // lazy chan, signals when future has completed
-	value R                             // result value, protected by done
-	err   error                         // result error, protected by done
+	done  lazydone.Lazy // lazy chan, signals when future has completed
+	value R             // result value, protected by done
+	err   error         // result error, protected by done
 }
 
 // Future returns a [Future] for this promise.
@@ -44,7 +44,7 @@ func (p *Promise[R]) Resolve(value R) {
 	}
 
 	p.value = value
-	p.close()
+	p.done.Close()
 }
 
 // Reject breaks the promise with an error.
@@ -54,7 +54,7 @@ func (p *Promise[R]) Reject(err error) {
 	}
 
 	p.err = err
-	p.close()
+	p.done.Close()
 }
 
 // Do runs fn synchronously, fulfilling the promise once it completes.
@@ -64,13 +64,7 @@ func (p *Promise[R]) Do(fn func() (R, error)) {
 	}
 
 	p.value, p.err = fn()
-	p.close()
-}
-
-func (p *Promise[R]) close() {
-	if done := p.done.Swap(&closedChan); done != nil {
-		close(*done)
-	}
+	p.done.Close()
 }
 
 func (p *Promise[R]) String() string {
@@ -78,13 +72,9 @@ func (p *Promise[R]) String() string {
 		return "Promise <nil>"
 	}
 
-	if done := p.done.Load(); done != nil {
-		select {
-		case <-*done:
-			return fmt.Sprintf("Promise resolved: %v, %v", p.value, p.err)
-		default:
-		}
+	if !p.done.Closed() {
+		return "Promise pending"
 	}
 
-	return "Promise pending"
+	return fmt.Sprintf("Promise resolved: %v, %v", p.value, p.err)
 }
