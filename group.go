@@ -21,7 +21,7 @@ type Group interface {
 	Go(fn func() error)
 }
 
-// DoAsync schedules an asynchronous operation on the [Group] and returns a Future
+// DoAsync schedules an asynchronous operation on the [Group] and returns a [Future]
 // to retrieve the eventual result.
 func DoAsync[R any](g Group, fn func() (R, error)) *Future[R] {
 	var p Promise[R]

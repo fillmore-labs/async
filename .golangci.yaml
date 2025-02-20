@@ -5,33 +5,51 @@ linters:
   enable-all: true
   disable:
     # deprecated
-    - deadcode
-    - exhaustivestruct
-    - golint
-    - ifshort
-    - interfacer
-    - maligned
-    - nosnakecase
-    - scopelint
-    - structcheck
-    - varcheck
+    - tenv
     # disabled
     - depguard
+    - dupl
     - exhaustruct
     - forbidigo
     - nonamedreturns
     - varnamelen
     - wrapcheck
     - wsl
-    # Go 1.22
-    - copyloopvar
-    - intrange
 linters-settings:
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+    settings:
+      shadow:
+        strict: true
   testifylint:
     enable-all: true
     disable:
       - require-error
   ireturn:
     allow:
+      - anon
       - error
+      - empty
+      - stdlib
       - generic
+  predeclared:
+    ignore: "new"
+issues:
+  exclude-rules:
+    - path: _test\.go$
+      linters:
+        - revive
+      text: "dot-imports"
+    - path: _test\.go$
+      linters:
+        - govet
+      text: "lostcancel"
+    - path: ^main\.go$
+      linters:
+        - gocheckcompilerdirectives
+      text: "go:debug"
+    - linters:
+        - govet
+      text: '^shadow: declaration of "(ctx|err|ok)" shadows declaration at line \d+$'

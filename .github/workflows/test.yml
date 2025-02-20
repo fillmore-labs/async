@@ -9,27 +9,42 @@ name: Test
       - main
 jobs:
   test:
-    strategy:
-      matrix:
-        go: ['1.22', '1.21']
     name: Test on Go ${{ matrix.go }}
-    runs-on: ubuntu-latest
     permissions:
       checks: write
       contents: read
       pull-requests: read
       statuses: write
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        go: ["1.24", "1.23", "1.22"]
+        include:
+          - go: "1.24"
+            go-version: "1.24.0"
+            update-coverage: true
+          - go: "1.23"
+            go-version: "1.23.6"
+          - go: "1.22"
+            go-version: "1.22.12"
+    env:
+      GOTOOLCHAIN: local
     steps:
       - name: ✔ Check out
         uses: actions/checkout@v4
-      - name: 🐹 Set up Go ${{ matrix.go }}
+      - name: 🐹 Set up Go ${{ matrix.go-version }}
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
-          check-latest: true
+          go-version: ${{ matrix.go-version }}
       - name: 🧸 golangci-lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.57.2
+          version: v1.64.5
       - name: 🔨 Test
-        run: go test -race ./...
+        run: go test -race -coverprofile=cover.out ./...
+      - name: 🧑🏻‍💻 codecov
+        uses: codecov/codecov-action@v5
+        if: ${{ matrix.update-coverage }}
+        with:
+          files: ./cover.out
+          token: ${{ secrets.CODECOV_TOKEN }}

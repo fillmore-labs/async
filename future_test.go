@@ -98,7 +98,7 @@ func TestMultiple(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	for i := 0; i < iterations; i++ {
+	for i := range iterations {
 		p := async.Promise[int]{}
 		f := p.Future()
 
@@ -107,7 +107,7 @@ func TestMultiple(t *testing.T) {
 
 		var wg sync.WaitGroup
 		wg.Add(concurrency)
-		for c := 0; c < concurrency; c++ {
+		for c := range concurrency {
 			go func(i int) {
 				defer wg.Done()
 				values[i], errs[i] = f.Await(ctx)
@@ -117,7 +117,7 @@ func TestMultiple(t *testing.T) {
 		wg.Wait()
 
 		// then
-		for c := 0; c < concurrency; c++ {
+		for c := range concurrency {
 			if assert.NoError(t, errs[c]) {
 				assert.Equal(t, i, values[c])
 			}
@@ -206,7 +206,6 @@ func TestPromise_String(t *testing.T) {
 		{"Resolved", resolved(), "Promise resolved: 1, <nil>"},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equalf(t, tt.want, tt.p.String(), "String()")
@@ -248,7 +247,6 @@ func TestFuture_String(t *testing.T) {
 		{"Resolved", resolved(), "Future resolved: 0, test error"},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equalf(t, tt.want, tt.f.String(), "String()")

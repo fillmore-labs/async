@@ -1,14 +1,14 @@
 module fillmore-labs.com/async
 
-go 1.21
+go 1.22
 
-toolchain go1.22.2
+toolchain go1.24.0
 
 require (
-	fillmore-labs.com/lazydone v0.0.2
+	fillmore-labs.com/lazydone v0.0.3
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/goleak v1.3.0
-	golang.org/x/sync v0.7.0
+	golang.org/x/sync v0.11.0
 )
 
 require (
